@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>普普的風雲端點餐系統</title>
+    <title>普普風雲端點餐系統</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons -->
@@ -31,24 +31,70 @@
 </head>
 <body class="selection:bg-amber-200 pb-20">
 
-    <div id="app"></div>
+    <div id="app">
+        <!-- 預設載入畫面，避免空白 -->
+        <div class="fixed inset-0 flex items-center justify-center bg-[#fffbf2]">
+            <div class="text-center animate-pulse">
+                <h2 class="text-2xl font-bold text-amber-600 mb-2">系統載入中...</h2>
+                <p class="text-gray-500">正在初始化點餐系統</p>
+            </div>
+        </div>
+    </div>
 
     <!-- Toast Container -->
     <div id="toast-container" class="fixed top-4 left-1/2 transform -translate-x-1/2 z-[9999] flex flex-col items-center space-y-2 pointer-events-none w-full max-w-sm px-4"></div>
 
     <script type="module">
+        // --- Error Handling for Blank Screen ---
+        window.onerror = function(message, source, lineno, colno, error) {
+            console.error("Global Error:", message);
+            const app = document.getElementById('app');
+            if (app && (message.includes('Firebase') || message.includes('config') || message.includes('appId'))) {
+                app.innerHTML = `
+                    <div class="fixed inset-0 flex items-center justify-center bg-red-50 p-6">
+                        <div class="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full border-2 border-red-100">
+                            <h2 class="text-2xl font-black text-red-600 mb-4">⚠️ 系統錯誤</h2>
+                            <p class="text-gray-700 mb-4 font-bold">發生了一些問題，請檢查以下設定：</p>
+                            <ol class="list-decimal pl-5 space-y-2 text-gray-600 text-sm mb-6">
+                                <li>若是下載後執行，請確認是否已填入 <code class="bg-gray-100 px-1 rounded">firebaseConfig</code>。</li>
+                                <li>請確認網路連線是否正常。</li>
+                            </ol>
+                            <div class="bg-gray-100 p-3 rounded text-xs font-mono break-all text-red-500">
+                                錯誤訊息: ${message}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        };
+
         // --- Firebase Imports ---
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js';
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js';
         import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js';
 
-        // --- Configuration ---
-        const apiKey = ""; // API Key 會由環境提供，若在本地運行需填入
-        // 這裡模擬環境變數，實際使用時請替換為真實設定
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { apiKey: apiKey, authDomain: "test.firebaseapp.com", projectId: "test" }; 
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        // --- Configuration (關鍵修正：請在此處填入您的 Firebase 設定) ---
+        // 如果您是在本地開啟檔案，請將下方的 apiKey 等資訊填寫完整
+        const firebaseConfig = {
+            apiKey: "AIzaSyCb6XyW3sFVxhFbnhZsDWUQ0g2MT__G6I4",            // <--- 請填入您的 API Key
+            authDomain: "users-bf3ee.firebaseapp.com",        // <--- 請填入您的 Auth Domain
+            projectId: "users-bf3ee",         // <--- 請填入您的 Project ID
+            storageBucket: "users-bf3ee.firebasestorage.app",     
+            messagingSenderId: "514281139179", 
+            appId: "1:514281139179:web:22af49132c17ad77b207ae"              
+        };
 
-        const app = initializeApp(firebaseConfig);
+        // 嘗試從環境變數讀取 (相容 AI 預覽環境)
+        const finalConfig = (typeof __firebase_config !== 'undefined') ? JSON.parse(__firebase_config) : firebaseConfig;
+        // FIX: Renamed appIdStr back to appId to match usage in Firestore queries
+        const appId = (typeof __app_id !== 'undefined') ? __app_id : 'default-app-id';
+
+        // 檢查設定是否為空
+        if (!finalConfig.apiKey) {
+            throw new Error("Firebase config is missing! Please edit the HTML file to add your config.");
+        }
+
+        const app = initializeApp(finalConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
@@ -78,7 +124,7 @@
             { id: 'juice_5', name: '香蕉牛奶', price: 130, type: 'juice', temp: 'iceOnly' },
             { id: 'juice_6', name: '葡萄優格飲', price: 140, type: 'juice', temp: 'iceOnly' },
             { id: 'smoothie_1', name: '芒果冰沙', price: 140, type: 'smoothie', temp: 'iceOnly' },
-            { id: 'smoothie_2', name: '檸檬優格冰沙', price: 140, type: 'smoothie', temp: 'iceOnly' }
+            { id: 'smoothie_2', name: '檸檬優格冰沙', price: 140, type: 'smoothie', temp: 'iceOnly' },
             { id: 'smoothie_3', name: '巧克力可可冰沙', price: 150, type: 'smoothie', temp: 'iceOnly' },
             { id: 'smoothie_4', name: 'OREO 餅乾奶昔', price: 160, type: 'smoothie', temp: 'iceOnly' },
         ];
@@ -281,7 +327,7 @@
             logoDiv.innerHTML = `
                 <div class="bg-white text-amber-600 p-2 rounded-xl font-bold text-2xl border-2 border-amber-100 shadow-sm flex items-center justify-center w-12 h-12">P</div>
                 <div>
-                    <h1 class="text-xl sm:text-2xl font-black tracking-wider hidden sm:block">普普的風複合式餐飲</h1>
+                    <h1 class="text-xl sm:text-2xl font-black tracking-wider hidden sm:block">普普風複合式餐飲</h1>
                     <h1 class="text-xl font-black tracking-wider sm:hidden">Popo Cafe</h1>
                 </div>
             `;
@@ -745,7 +791,7 @@
                         <div class="p-6 bg-white border-t border-gray-200 space-y-4 shadow-[0_-5px_15px_rgba(0,0,0,0.05)]">
                             <div class="bg-gray-50 p-3 rounded-xl border border-gray-200 flex items-center" id="name-input-div">
                                 <i data-lucide="user" class="text-gray-400 mr-3" width="20"></i>
-                                <input type="text" id="cart-name" placeholder="請輸入您的姓名 (必填)" class="bg-transparent w-full font-bold text-gray-800 outline-none placeholder-gray-400">
+                                <input type="text" id="cart-name" placeholder="請輸入您的姓名/桌號 (必填)" class="bg-transparent w-full font-bold text-gray-800 outline-none placeholder-gray-400">
                             </div>
                             <div class="flex justify-between items-center pb-2 border-b border-gray-100">
                                 <span class="text-xl font-bold text-gray-800">總金額</span>
@@ -812,7 +858,7 @@
             } else {
                 submitBtn.onclick = async () => {
                     if (!state.customerName.trim()) {
-                        addToast('請輸入訂購人姓名', 'error');
+                        addToast('請輸入訂購人姓名以便送餐', 'error');
                         overlay.querySelector('#name-input-div').classList.add('border-red-500', 'bg-red-50');
                         return;
                     }
@@ -1320,11 +1366,13 @@
         // --- Init ---
         const initAuth = async () => {
             try {
-                // Check if custom token is provided (environment specific)
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
+                if (finalConfig.apiKey) {
+                    // Check if custom token is provided (environment specific)
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
                 }
             } catch (error) {
                 console.error("Auth failed", error);
